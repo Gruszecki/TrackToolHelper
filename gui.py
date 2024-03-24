@@ -50,8 +50,7 @@ class MainWindow(QMainWindow):
 
         self.start_button = QPushButton("Start")
         self.start_button.setStyleSheet("background-color: lightblue")
-        self.scrap_loop_thread = threading.Thread(target=self.start_scraping_vocals)
-        self.start_button.clicked.connect(self.scrap_loop_thread.start)
+        self.start_button.clicked.connect(self.start_scraping_vocals)
         layout.addWidget(self.start_button)
 
         self.exit_button = QPushButton("Wyjdź")
@@ -88,7 +87,8 @@ class MainWindow(QMainWindow):
         else:
             browser = 'Firefox'
 
-        vocals_scrapper.run_loop(self.input_path.text(), self.output_path.text(), browser)
+        threading.Thread(target=lambda: vocals_scrapper.run_loop(self.input_path.text(), self.output_path.text(), browser)).start()
+
 
     def mousePressEvent(self, event):
         self.m_old_pos = event.globalPosition()
