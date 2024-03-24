@@ -1,6 +1,11 @@
+import threading
+
 from PySide6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QPushButton, QRadioButton, QLabel, QLineEdit, QFileDialog, QWidget
 from PySide6.QtCore import Qt, QStandardPaths, QPointF
 from PySide6.QtGui import QFont, QPixmap, QPalette, QBrush
+
+import vocals_scrapper
+
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -44,6 +49,8 @@ class MainWindow(QMainWindow):
 
         self.start_button = QPushButton("Start")
         self.start_button.setStyleSheet("background-color: lightblue")
+        self.scrap_loop_thread = threading.Thread(target=self.start_scraping_vocals)
+        self.start_button.clicked.connect(self.scrap_loop_thread.start)
         layout.addWidget(self.start_button)
 
         self.exit_button = QPushButton("Wyjdź")
@@ -69,6 +76,18 @@ class MainWindow(QMainWindow):
 
         self.m_mouse_down = False
         self.m_old_pos = None
+
+    def start_scraping_vocals(self):
+        if self.firefox_button.isChecked():
+            browser = 'Firefox'
+        elif self.chrome_button.isChecked():
+            browser = 'Chrome'
+        elif self.edge_button.isChecked():
+            browser = 'Edge'
+        else:
+            browser = 'Firefox'
+
+        vocals_scrapper.run_loop(self.input_path.text(), self.output_path.text(), browser)
 
     def mousePressEvent(self, event):
         self.m_old_pos = event.globalPosition()

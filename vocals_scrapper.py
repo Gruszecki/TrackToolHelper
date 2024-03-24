@@ -1,3 +1,4 @@
+import os.path
 import time
 
 import pyautogui
@@ -19,11 +20,11 @@ DOWNLOAD_VOCAL_SELECTOR = (By.XPATH, '//button[span[text()="Vocal"]]')
 class WebWalker:
     def __init__(self, browser):
         match browser:
-            case 'firefox':
+            case 'Firefox':
                 self._driver = webdriver.Firefox()
-            case 'chrome':
+            case 'Chrome':
                 self._driver = webdriver.Chrome()
-            case 'edge':
+            case 'Edge':
                 self._driver = webdriver.Edge()
             case _:
                 self._driver = webdriver.Firefox()
@@ -35,7 +36,7 @@ class WebWalker:
         self._driver.close()
 
     def open_site(self):
-        self._driver.get('https://vocalremover.org/?patreon')
+        self._driver.get('https://vocalremover.org')
 
     def upload_file(self, audio_path):
         WebDriverWait(self._driver, 5).until(EC.element_to_be_clickable(BUTTON_BROWSE_SELECTOR)).click()
@@ -50,18 +51,19 @@ class WebWalker:
         self._driver.find_element(*DOWNLOAD_VOCAL_SELECTOR).click()
 
 
-def _get_vocals(audio_path, browser='firefox'):
+def _get_vocals(audio_path, browser='Firefox'):
     ww = WebWalker(browser)
     ww.open_site()
     ww.upload_file(audio_path)
     ww.save_vocals()
 
 
-def run_loop(audio_path='', output_path='', browser='firefox'):
+def run_loop(audio_path='', output_path='', browser='Firefox'):
     audio_files = get_audio_files(audio_path)
     already_extracted = [[get_band_name(path), get_song_title(path)] for path in get_audio_files(output_path)]
 
     for audio_file in audio_files:
+        audio_file = os.path.normpath(audio_file)
         metadata = [get_band_name(audio_file), get_song_title(audio_file)]
 
         print(audio_file)
