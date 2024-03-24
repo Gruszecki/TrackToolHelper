@@ -1,0 +1,7 @@
+librosa
+mutagen
+numpy
+pyautogui
+pyperclip
+PySide6
+selenium
