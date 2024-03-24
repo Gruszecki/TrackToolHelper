@@ -8,7 +8,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
-from general import get_audio_files
+import general
 from tag_walker import get_band_name, get_song_title
 
 
@@ -35,6 +35,9 @@ class WebWalker:
     def __exit__(self, exc_type, exc_val, exc_tb):
         self._driver.close()
 
+    def force_quit(self):
+        self._driver.quit()
+
     def open_site(self):
         self._driver.get('https://vocalremover.org')
 
@@ -49,6 +52,7 @@ class WebWalker:
     def save_vocals(self):
         WebDriverWait(self._driver, 300).until(EC.element_to_be_clickable(BUTTON_SAVE_SELECTOR)).click()
         self._driver.find_element(*DOWNLOAD_VOCAL_SELECTOR).click()
+        time.sleep(3)
 
 
 def _get_vocals(audio_path, browser='Firefox'):
@@ -56,11 +60,13 @@ def _get_vocals(audio_path, browser='Firefox'):
     ww.open_site()
     ww.upload_file(audio_path)
     ww.save_vocals()
+    time.sleep(3)
+    ww.force_quit()
 
 
 def run_loop(audio_path='', output_path='', browser='Firefox'):
-    audio_files = get_audio_files(audio_path)
-    already_extracted = [[get_band_name(path), get_song_title(path)] for path in get_audio_files(output_path)]
+    audio_files = general.get_audio_files(audio_path)
+    already_extracted = [[get_band_name(path), get_song_title(path)] for path in general.get_audio_files(output_path)]
 
     for audio_file in audio_files:
         audio_file = os.path.normpath(audio_file)
@@ -72,6 +78,6 @@ def run_loop(audio_path='', output_path='', browser='Firefox'):
                 _get_vocals(audio_file, browser)
                 print('Done')
             except Exception as e:
-                print(e)
+                print('Server not responding')
         else:
             print(f'Vocals already extracted in {output_path}')

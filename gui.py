@@ -4,6 +4,7 @@ from PySide6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QPushButto
 from PySide6.QtCore import Qt, QStandardPaths, QPointF
 from PySide6.QtGui import QFont, QPixmap, QPalette, QBrush
 
+import general
 import vocals_scrapper
 
 
@@ -71,7 +72,7 @@ class MainWindow(QMainWindow):
         self.setFixedSize(500, 300)
 
         palette = QPalette()
-        palette.setBrush(QPalette.Window, QBrush(QPixmap("background.jpg").scaled(self.size(), Qt.KeepAspectRatioByExpanding, Qt.SmoothTransformation)))
+        palette.setBrush(QPalette.Window, QBrush(QPixmap(general.resource_path("background.jpg")).scaled(self.size(), Qt.KeepAspectRatioByExpanding, Qt.SmoothTransformation)))
         self.setPalette(palette)
 
         self.m_mouse_down = False

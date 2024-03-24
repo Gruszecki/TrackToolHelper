@@ -1,7 +1,8 @@
 import librosa
 import numpy as np
 
-def _split(audio_file, threshold=0.7):
+
+def calculate_vocals(audio_file, threshold=0.65):
     y, sr = librosa.load(audio_file)
     D = librosa.stft(y)
     magnitude, phase = librosa.magphase(D)
