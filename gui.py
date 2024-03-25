@@ -1,10 +1,12 @@
+import os
 import threading
 
-from PySide6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QPushButton, QRadioButton, QLabel, QLineEdit, QFileDialog, QWidget, QTabWidget, QSlider, QTableWidget, QTableWidgetItem, QCheckBox
+from PySide6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QPushButton, QRadioButton, QLabel, QLineEdit, QFileDialog, QWidget, QTabWidget, QSlider, QTableWidget, QTableWidgetItem, QCheckBox, QMessageBox
 from PySide6.QtCore import Qt, QStandardPaths, QPointF
 from PySide6.QtGui import QFont, QPixmap, QPalette, QBrush
 
 import general
+import radioboss_db
 import vocals_analysis
 import vocals_scrapper
 
@@ -44,27 +46,38 @@ class MainWindow(QMainWindow):
 
         ################### Tab 1 #####################
 
-        self.input_path = QLineEdit()
-        self.input_path.setPlaceholderText("Ścieżka do piosenek")
-        self.input_path.setStyleSheet("background-color: rgba(255, 255, 255, 0.7);")
-        self.tab1_layout.addWidget(self.input_path)
+        # Songs path
+        self.songs_path_layout = QHBoxLayout()
 
-        self.input_path_button = QPushButton("Wybierz folder")
-        self.input_path_button.setStyleSheet("background-color: lightblue;")
-        self.input_path_button.clicked.connect(self.select_input_path)
-        self.tab1_layout.addWidget(self.input_path_button)
+        self.songs_path = QLineEdit()
+        self.songs_path.setPlaceholderText("Ścieżka do piosenek")
+        self.songs_path.setStyleSheet("background-color: rgba(255, 255, 255, 0.7);")
+        self.songs_path_layout.addWidget(self.songs_path)
 
-        self.output_path = QLineEdit()
-        self.output_path.setText(QStandardPaths.writableLocation(QStandardPaths.DownloadLocation))
-        self.output_path.setStyleSheet("background-color: rgba(255, 255, 255, 0.7);")
-        self.output_path.setPlaceholderText("Ścieżka outputu")
-        self.tab1_layout.addWidget(self.output_path)
+        self.songs_path_button = QPushButton("Wybierz folder")
+        self.songs_path_button.setStyleSheet("background-color: lightblue;")
+        self.songs_path_button.clicked.connect(self.select_songs_path)
+        self.songs_path_layout.addWidget(self.songs_path_button)
+
+        self.tab1_layout.addLayout(self.songs_path_layout)
+
+        # Downloads path
+        self.downloads_path_layout = QHBoxLayout()
+
+        self.downloads_path = QLineEdit()
+        self.downloads_path.setText(QStandardPaths.writableLocation(QStandardPaths.DownloadLocation))
+        self.downloads_path.setStyleSheet("background-color: rgba(255, 255, 255, 0.7);")
+        self.downloads_path.setPlaceholderText("Ścieżka outputu")
+        self.downloads_path_layout.addWidget(self.downloads_path)
 
         self.output_path_button = QPushButton("Wybierz folder")
         self.output_path_button.setStyleSheet("background-color: lightblue;")
         self.output_path_button.clicked.connect(self.select_output_path)
-        self.tab1_layout.addWidget(self.output_path_button)
+        self.downloads_path_layout.addWidget(self.output_path_button)
 
+        self.tab1_layout.addLayout(self.downloads_path_layout)
+
+        # Browser pick
         self.firefox_button = QRadioButton("Firefox")
         self.firefox_button.setChecked(True)
         self.tab1_layout.addWidget(self.firefox_button)
@@ -75,25 +88,61 @@ class MainWindow(QMainWindow):
         self.edge_button = QRadioButton("Edge")
         self.tab1_layout.addWidget(self.edge_button)
 
-        self.start_button = QPushButton("Start")
-        self.start_button.setStyleSheet("background-color: lightblue")
-        self.start_button.clicked.connect(self.start_scraping_vocals)
-        self.tab1_layout.addWidget(self.start_button)
+        # Start button
+        self.start_scraping_vocals_button = QPushButton("Start")
+        self.start_scraping_vocals_button.setStyleSheet("background-color: lightblue")
+        self.start_scraping_vocals_button.clicked.connect(self.start_scraping_vocals)
+        self.tab1_layout.addWidget(self.start_scraping_vocals_button)
 
 
         ##################### Tab 2 #######################
         THRESHOLD_INIT = 0.5
 
+        # RadioBOSS database
+        self.db_path_layout = QHBoxLayout()
+
+        self.db_path = QLineEdit()
+        self.db_path.setPlaceholderText("Ścieżka do bazy danych")
+        default_db_path = os.path.join(os.environ['APPDATA'], 'djsoft.net', 'tracks.db')
+        self.db_path.setText(default_db_path) if os.path.exists(default_db_path) else ''
+        self.db_path.setStyleSheet("background-color: rgba(255, 255, 255, 0.7);")
+        self.db_path_layout.addWidget(self.db_path)
+
+        self.db_path_button = QPushButton("Wybierz folder")
+        self.db_path_button.setStyleSheet("background-color: lightblue;")
+        self.db_path_button.clicked.connect(self.select_db_file)
+        self.db_path_layout.addWidget(self.db_path_button)
+
+        self.tab2_layout.addLayout(self.db_path_layout)
+
+
+        # Vocals
+        self.vocals_path_layout = QHBoxLayout()
+
         self.vocals_path = QLineEdit()
         self.vocals_path.setPlaceholderText("Ścieżka do wokali")
         self.vocals_path.setStyleSheet("background-color: rgba(255, 255, 255, 0.7);")
-        self.tab2_layout.addWidget(self.vocals_path)
+        self.vocals_path_layout.addWidget(self.vocals_path)
 
         self.vocals_path_button = QPushButton("Wybierz folder")
         self.vocals_path_button.setStyleSheet("background-color: lightblue;")
         self.vocals_path_button.clicked.connect(self.select_vocals_path)
-        self.tab2_layout.addWidget(self.vocals_path_button)
+        self.vocals_path_layout.addWidget(self.vocals_path_button)
 
+        self.read_from_mp3_button = QPushButton("Odczytaj z mp3")
+        self.read_from_mp3_button.setStyleSheet("background-color: lightblue")
+        self.read_from_mp3_button.clicked.connect(self.read_vocals_time)
+        self.vocals_path_layout.addWidget(self.read_from_mp3_button)
+
+        self.stop_button = QPushButton("Stop")
+        self.stop_button.setStyleSheet("background-color: lightblue")
+        self.stop_button.clicked.connect(self.stop_reading)
+        self.vocals_path_layout.addWidget(self.stop_button)
+
+        self.tab2_layout.addLayout(self.vocals_path_layout)
+
+
+        # Threshold
         self.slider_input_layout = QHBoxLayout()
 
         self.threshold_label = QLabel("Threshold")
@@ -114,37 +163,48 @@ class MainWindow(QMainWindow):
 
         self.tab2_layout.addLayout(self.slider_input_layout)
 
-        self.omit_vocals_checkbox = QCheckBox('Nie przetwarzaj wokali dla piosenek, które są już w bazie')
-        self.omit_vocals_checkbox.setChecked(True)
-        self.tab2_layout.addWidget(self.omit_vocals_checkbox)
+        # Saving options
+        self.omit_vocals_from_db_checkbox = QCheckBox('Nie przetwarzaj wokali dla piosenek, które są już w bazie RadioBossa')
+        self.omit_vocals_from_db_checkbox.setChecked(True)
+        self.tab2_layout.addWidget(self.omit_vocals_from_db_checkbox)
+
+        self.omit_vocals_from_results_checkbox = QCheckBox('Nie przetwarzaj wokali dla piosenek, które są już wczytane')
+        self.omit_vocals_from_results_checkbox.setChecked(True)
+        self.tab2_layout.addWidget(self.omit_vocals_from_results_checkbox)
 
         self.overwrite_checkbox = QCheckBox('Nadpisz piosenkę w bazie')
         self.overwrite_checkbox.setChecked(False)
         self.tab2_layout.addWidget(self.overwrite_checkbox)
 
-        self.read_voc_button_layout = QHBoxLayout()
+        # Json
+        self.read_voc_info_buttons_layout = QHBoxLayout()
 
-        self.read_button = QPushButton("Odczytaj")
-        self.read_button.setStyleSheet("background-color: lightblue")
-        self.read_button.clicked.connect(self.read_vocals_time)
-        self.read_voc_button_layout.addWidget(self.read_button)
+        self.read_from_json_button = QPushButton("Wczytaj dane z pliku json")
+        self.read_from_json_button.setStyleSheet("background-color: lightblue")
+        self.read_from_json_button.clicked.connect(self.load_vocals_time)
+        self.read_voc_info_buttons_layout.addWidget(self.read_from_json_button)
 
-        self.stop_button = QPushButton("Stop")
-        self.stop_button.setStyleSheet("background-color: lightblue")
-        self.stop_button.clicked.connect(self.stop_reading)
-        self.read_voc_button_layout.addWidget(self.stop_button)
+        self.save_to_json_button = QPushButton("Zapisz dane do pliku json")
+        self.save_to_json_button.setStyleSheet("background-color: lightblue")
+        self.save_to_json_button.clicked.connect(self.dump_vocals_time)
+        self.read_voc_info_buttons_layout.addWidget(self.save_to_json_button)
+
+        self.tab2_layout.addLayout(self.read_voc_info_buttons_layout)
+
+        # Buttons: Read from mp3, save, clear
+        self.read_stop_save_clear_buttons_layout = QHBoxLayout()
 
         self.save_db_button = QPushButton("Zapisz w bazie")
         self.save_db_button.setStyleSheet("background-color: lightblue")
         self.save_db_button.clicked.connect(self.send_vocs_to_db)
-        self.read_voc_button_layout.addWidget(self.save_db_button)
+        self.read_stop_save_clear_buttons_layout.addWidget(self.save_db_button)
 
         self.clear_results_button = QPushButton("Czyść wyniki")
         self.clear_results_button.setStyleSheet("background-color: lightyellow")
         self.clear_results_button.clicked.connect(self.clear_results)
-        self.read_voc_button_layout.addWidget(self.clear_results_button)
+        self.read_stop_save_clear_buttons_layout.addWidget(self.clear_results_button)
 
-        self.tab2_layout.addLayout(self.read_voc_button_layout)
+        self.tab2_layout.addLayout(self.read_stop_save_clear_buttons_layout)
 
 
         ###################### Tab 3 #######################
@@ -212,17 +272,22 @@ class MainWindow(QMainWindow):
     def mouseReleaseEvent(self, event):
         m_mouse_down = False
 
-    def select_input_path(self):
+    def select_songs_path(self):
         folder_path = QFileDialog.getExistingDirectory(self, "Wybierz folder")
-        self.input_path.setText(folder_path)
+        self.songs_path.setText(folder_path)
 
     def select_vocals_path(self):
         folder_path = QFileDialog.getExistingDirectory(self, "Wybierz folder z wokalami")
         self.vocals_path.setText(folder_path)
 
+    def select_db_file(self):
+        file_path, _ = QFileDialog.getOpenFileName(self, "Wybierz plik z bazą danych")
+        if file_path:
+            self.db_path.setText(file_path)
+
     def select_output_path(self):
         folder_path = QFileDialog.getExistingDirectory(self, "Wybierz folder")
-        self.output_path.setText(folder_path)
+        self.downloads_path.setText(folder_path)
 
     def start_scraping_vocals(self):
         if self.firefox_button.isChecked():
@@ -234,23 +299,99 @@ class MainWindow(QMainWindow):
         else:
             browser = 'Firefox'
 
-        threading.Thread(target=lambda: vocals_scrapper.run_loop(self.input_path.text(), self.output_path.text(), browser)).start()
+        threading.Thread(target=lambda: vocals_scrapper.run_loop(self.songs_path.text(), self.songs_path.text(), browser)).start()
 
     def read_vocals_time(self):
-        self.worker = vocals_analysis.Worker(self.vocals_path.text(), float(self.input_threshold.text()))
-        self.worker.update_voc.connect(self.update_table)
-        self.worker.start()
+        if self.omit_vocals_from_db_checkbox.isChecked() and not self.db_path.text():
+            info_message = QMessageBox(self)
+            info_message.setIcon(QMessageBox.Warning)
+            info_message.setWindowTitle('Uzupełnij, proszę, wymagane pole')
+            info_message.setText('Jeśli chcesz sprawdzać czy dana piosenka jest już w bazie, musisz podać jej lokalizację.\n\n'
+                                 'Prawdopodobnie nazywa się tracks.db i znajduje się w:\n '
+                                 'C:\\Users\\<user>\\AppData\\Roaming\\djsoft.net\\\n\n'
+                                 'Miłego dnia.')
+            info_message.exec()
+        else:
+            self.worker = vocals_analysis.Worker(
+                vocals_path=self.vocals_path.text(),
+                threshold=float(self.input_threshold.text()),
+                look_in_db=self.omit_vocals_from_db_checkbox.isChecked(),
+                look_in_results=self.omit_vocals_from_results_checkbox.isChecked(),
+                db_path=self.db_path.text()
+            )
+            self.worker.update_voc.connect(self.update_table)
+            self.worker.start()
+
+    def load_vocals_time(self):
+        dialog = QFileDialog()
+        json_path, _ = dialog.getOpenFileName(filter="JSON files (*.json)")
+
+        if json_path:
+            vocals_analysis.load_data(json_path)
+
+        self.clear_table_only()
+
+        for record in vocals_analysis.vocal_time_database:
+            self.update_table(record)
+
+    def dump_vocals_time(self):
+        dialog = QFileDialog()
+        json_path, _ = dialog.getSaveFileName(filter="JSON files (*.json)")
+
+        if json_path:
+            vocals_analysis.save_data(json_path)
 
     def stop_reading(self):
         if hasattr(self, 'worker'):
             self.worker.stop()
 
     def send_vocs_to_db(self):
-        pass
+        if self.db_path.text():
+            if not vocals_analysis.vocal_time_database:
+                dialog_box = QMessageBox(self)
+                dialog_box.setWindowTitle("Czegoś tu nie rozumiem")
+                dialog_box.setText('Ale wiesz, że nie masz wczytanych żadnych wyników? '
+                                   'Możemy kontynuować, ale i tak nic się nie stanie.\n\n'
+                                   'Kontynuujemy?')
+                dialog_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+                dialog_box.setIcon(QMessageBox.Question)
+                button = dialog_box.exec()
+
+                if button == QMessageBox.No:
+                    return
+
+            dialog_box = QMessageBox(self)
+            dialog_box.setWindowTitle("Tylko się upewniam")
+            dialog_box.setText('Czy RadioBoss jest wyłączony?\n\n'
+                                 'Jeśli nie to okej, po prostu będziesz musiał go zresetować, żeby zobaczyć aktualne dane.\n\n'
+                                 'Kontynuujemy?')
+            dialog_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+            dialog_box.setIcon(QMessageBox.Question)
+            button = dialog_box.exec()
+
+            if button == QMessageBox.Yes:
+                radioboss_db.add_songs_info(self.db_path.text(), self.overwrite_checkbox.isChecked(), vocals_analysis.vocal_time_database)
+
+        else:
+            info_message = QMessageBox(self)
+            info_message.setIcon(QMessageBox.Warning)
+            info_message.setWindowTitle('Uzupełnij, proszę, wymagane pole')
+            info_message.setText('Jeśli chcesz uzupełnić bazę RadioBossa, musisz najpierw wskazać bazę danych.\n\n'
+                                 'Prawdopodobnie nazywa się tracks.db i znajduje się w:\n '
+                                 'C:\\Users\\<user>\\AppData\\Roaming\\djsoft.net\\\n'
+                                 'Pamiętaj też o wyłączeniu RadioBossa w trakcie aktuailzacji bazy danych.\n\n'
+                                 'Miłego dnia.')
+            info_message.exec()
+
+    def clear_table_only(self):
+        self.table.setRowCount(0)
+
+    def clear_backend_database(self):
+        vocals_analysis.vocal_time_database.clear()
 
     def clear_results(self):
-        vocals_analysis.vocal_time_database.clear()
-        self.table.setRowCount(0)
+        self.clear_backend_database()
+        self.clear_table_only()
         print('Wyniki zostały wyczyszczone')
 
 
