@@ -141,10 +141,19 @@ class MainWindow(QMainWindow):
         self.tab1_layout.addLayout(self.browsers_layout)
 
         # Start button
+        self.start_stop_scrap_layout = QHBoxLayout()
+
         self.start_scraping_vocals_button = QPushButton("Start")
         self.start_scraping_vocals_button.setStyleSheet("background-color: lightblue")
         self.start_scraping_vocals_button.clicked.connect(self.start_scraping_vocals)
-        self.tab1_layout.addWidget(self.start_scraping_vocals_button)
+        self.start_stop_scrap_layout.addWidget(self.start_scraping_vocals_button)
+
+        self.stop_scrapping_button = QPushButton("Stop")
+        self.stop_scrapping_button.setStyleSheet("background-color: lightblue")
+        self.stop_scrapping_button.clicked.connect(self.stop_scrapping)
+        self.start_stop_scrap_layout.addWidget(self.stop_scrapping_button)
+
+        self.tab1_layout.addLayout(self.start_stop_scrap_layout)
 
 
         ##################### Tab 2 #######################
@@ -385,7 +394,7 @@ class MainWindow(QMainWindow):
         else:
             browser = 'Firefox'
 
-        threading.Thread(target=lambda: vocals_scrapper.run_loop(
+        self.ww = vocals_scrapper.WebWalker(
             self.songs_path.text(),
             browser,
             self.check_downloads.isChecked(),
@@ -394,7 +403,14 @@ class MainWindow(QMainWindow):
             self.check_vox_in_folder.isChecked(),
             json_path=self.check_vox_in_json_path.text(),
             folder_path=self.check_vox_in_folder_path.text()
-        )).start()
+        )
+        self.ww.start()
+
+    def stop_scrapping(self):
+        if hasattr(self, 'ww'):
+            self.ww.stop()
+        else:
+            print('ni mom atrybuta')
 
     def read_vocals_time(self):
         if self.omit_vocals_from_db_checkbox.isChecked() and not self.db_path.text():

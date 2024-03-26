@@ -4,6 +4,7 @@ from pathlib import Path
 
 import pyautogui
 import pyperclip
+from PySide6.QtCore import QThread
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
@@ -20,8 +21,10 @@ BUTTON_SAVE_SELECTOR = (By.XPATH, '//button[@class="white"]')
 DOWNLOAD_VOCAL_SELECTOR = (By.XPATH, '//button[span[text()="Vocal"]]')
 
 
-class WebWalker:
-    def __init__(self, browser):
+class WebWalker(QThread):
+    def __init__(self, audio_path, browser, check_downloads, check_db, check_json, check_folder, *, json_path, folder_path):
+        super().__init__()
+
         match browser:
             case 'Firefox':
                 self._driver = webdriver.Firefox()
@@ -32,17 +35,32 @@ class WebWalker:
             case _:
                 self._driver = webdriver.Firefox()
 
+        self.audio_path = audio_path
+        self.check_downloads = check_downloads
+        self.check_db = check_db
+        self.check_json = check_json
+        self.check_folder = check_folder
+        self.json_path = json_path
+        self.folder_path = folder_path
+
         self.not_found = list()
         self.found_many = list()
+        self.is_running = True
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        print('Closing web driver')
         self._driver.close()
 
+    def stop(self):
+        self.is_running = False
+        print('Pobieranie wokali zostanie zatrzymane')
+
     def force_quit(self):
+        print('Forcing quit')
         self._driver.quit()
 
     def open_site(self):
-        self._driver.get('https://vocalremover.org')
+        self._driver.get('https://vocalremover.org/?patreon')
 
     def upload_file(self, audio_path):
         WebDriverWait(self._driver, 5).until(EC.element_to_be_clickable(BUTTON_BROWSE_SELECTOR)).click()
@@ -57,40 +75,39 @@ class WebWalker:
         self._driver.find_element(*DOWNLOAD_VOCAL_SELECTOR).click()
         time.sleep(3)
 
+    def get_vocals(self, audio_path):
+        self.open_site()
+        self.upload_file(audio_path)
+        self.save_vocals()
+        time.sleep(3)
 
-def _get_vocals(audio_path, browser='Firefox'):
-    ww = WebWalker(browser)
-    ww.open_site()
-    ww.upload_file(audio_path)
-    ww.save_vocals()
-    time.sleep(3)
-    ww.force_quit()
+    def run(self):
+        audio_files = general.get_audio_files(self.audio_path)
+        already_in_downloads = [[get_band_name(path), get_song_title(path)] for path in general.get_audio_files(str(Path.home() / 'Downloads'))]
+        json_db = vocals_analysis.get_data_from_json(self.json_path)
+        already_in_json = [[d['band'], d['title']] for d in json_db]
+        already_in_folder = [[get_band_name(path), get_song_title(path)] for path in general.get_audio_files(self.folder_path)]
 
+        for audio_file in audio_files:
+            if not self.is_running:
+                break
 
-def run_loop(audio_path, browser, check_downloads, check_db, check_json, check_folder, *, json_path, folder_path):
-    audio_files = general.get_audio_files(audio_path)
-    already_in_downloads = [[get_band_name(path), get_song_title(path)] for path in general.get_audio_files(str(Path.home() / 'Downloads'))]
-    json_db = vocals_analysis.get_data_from_json(json_path)
-    already_in_json = [[d['band'], d['title']] for d in json_db]
-    already_in_folder = [[get_band_name(path), get_song_title(path)] for path in general.get_audio_files(folder_path)]
+            audio_file = os.path.normpath(audio_file)
+            metadata = [get_band_name(audio_file), get_song_title(audio_file)]
 
-    for audio_file in audio_files:
-        audio_file = os.path.normpath(audio_file)
-        metadata = [get_band_name(audio_file), get_song_title(audio_file)]
+            print(audio_file)
 
-        print(audio_file)
-
-        if check_downloads and metadata in already_in_downloads:
-            print('Vocals already extracted to Downloads')
-        elif check_db and is_in_db(get_band_name(audio_file), get_song_title(audio_file)):
-            print('Vocals already added to database')
-        elif check_json and metadata in already_in_json:
-            print('Vocals already saved in json file')
-        elif check_folder and metadata in already_in_folder:
-            print(f'Vocals already present in {folder_path}')
-        else:
-            try:
-                _get_vocals(audio_file, browser)
-                print('Done')
-            except Exception as e:
-                print('Server not responding')
+            if self.check_downloads and metadata in already_in_downloads:
+                print('Vocals already extracted to Downloads')
+            elif self.check_db and is_in_db(get_band_name(audio_file), get_song_title(audio_file)):
+                print('Vocals already added to database')
+            elif self.check_json and metadata in already_in_json:
+                print('Vocals already saved in json file')
+            elif self.check_folder and metadata in already_in_folder:
+                print(f'Vocals already present in {self.folder_path}')
+            else:
+                try:
+                    self.get_vocals(audio_file)
+                    print('Done')
+                except Exception as e:
+                    print('Server not responding')

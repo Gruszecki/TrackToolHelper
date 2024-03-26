@@ -59,7 +59,7 @@ class Worker(QThread):
 
     def stop(self):
         self.is_running = False
-        print('Przetwarzanie wokali zostanie zatrzymane')
+        print('Analiza wokali zostanie zatrzymane')
 
 
 def _is_in_results(band_name, song_title):
