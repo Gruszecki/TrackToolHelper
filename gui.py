@@ -487,9 +487,3 @@ class MainWindow(QMainWindow):
         self.clear_backend_database()
         self.clear_table_only()
         print('Wyniki zostały wyczyszczone')
-
-
-app = QApplication([])
-window = MainWindow()
-window.show()
-app.exec()
