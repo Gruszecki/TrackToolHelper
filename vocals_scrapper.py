@@ -60,7 +60,7 @@ class WebWalker(QThread):
         self._driver.quit()
 
     def open_site(self):
-        self._driver.get('https://vocalremover.org/?patreon')
+        self._driver.get('https://vocalremover.org')
 
     def upload_file(self, audio_path):
         WebDriverWait(self._driver, 5).until(EC.element_to_be_clickable(BUTTON_BROWSE_SELECTOR)).click()
