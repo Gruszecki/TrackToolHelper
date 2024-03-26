@@ -10,6 +10,8 @@ import radioboss_db
 import vocals_analysis
 import vocals_scrapper
 
+THRESHOLD_INIT = 0.45
+
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -146,7 +148,6 @@ class MainWindow(QMainWindow):
 
 
         ##################### Tab 2 #######################
-        THRESHOLD_INIT = 0.5
 
         # RadioBOSS database
         self.db_path_layout = QHBoxLayout()
