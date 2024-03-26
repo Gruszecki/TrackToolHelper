@@ -1,5 +1,6 @@
 import os.path
 import time
+from pathlib import Path
 
 import pyautogui
 import pyperclip
@@ -9,7 +10,9 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
 import general
+import vocals_analysis
 from tag_walker import get_band_name, get_song_title
+from radioboss_db import is_in_db
 
 
 BUTTON_BROWSE_SELECTOR = (By.XPATH, '//button[@class="upload"]')
@@ -39,7 +42,7 @@ class WebWalker:
         self._driver.quit()
 
     def open_site(self):
-        self._driver.get('https://vocalremover.org')
+        self._driver.get('https://vocalremover.org)
 
     def upload_file(self, audio_path):
         WebDriverWait(self._driver, 5).until(EC.element_to_be_clickable(BUTTON_BROWSE_SELECTOR)).click()
@@ -64,20 +67,30 @@ def _get_vocals(audio_path, browser='Firefox'):
     ww.force_quit()
 
 
-def run_loop(audio_path='', output_path='', browser='Firefox'):
+def run_loop(audio_path, browser, check_downloads, check_db, check_json, check_folder, *, json_path, folder_path):
     audio_files = general.get_audio_files(audio_path)
-    already_extracted = [[get_band_name(path), get_song_title(path)] for path in general.get_audio_files(output_path)]
+    already_in_downloads = [[get_band_name(path), get_song_title(path)] for path in general.get_audio_files(str(Path.home() / 'Downloads'))]
+    json_db = vocals_analysis.get_data_from_json(json_path)
+    already_in_json = [[d['band'], d['title']] for d in json_db]
+    already_in_folder = [[get_band_name(path), get_song_title(path)] for path in general.get_audio_files(folder_path)]
 
     for audio_file in audio_files:
         audio_file = os.path.normpath(audio_file)
         metadata = [get_band_name(audio_file), get_song_title(audio_file)]
 
         print(audio_file)
-        if metadata not in already_extracted:
+
+        if check_downloads and metadata in already_in_downloads:
+            print('Vocals already extracted to Downloads')
+        elif check_db and is_in_db(get_band_name(audio_file), get_song_title(audio_file)):
+            print('Vocals already added to database')
+        elif check_json and metadata in already_in_json:
+            print('Vocals already saved in json file')
+        elif check_folder and metadata in already_in_folder:
+            print(f'Vocals already present in {folder_path}')
+        else:
             try:
                 _get_vocals(audio_file, browser)
                 print('Done')
             except Exception as e:
                 print('Server not responding')
-        else:
-            print(f'Vocals already extracted in {output_path}')

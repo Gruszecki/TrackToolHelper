@@ -40,7 +40,7 @@ class Worker(QThread):
                 print(f'{band_name} - {song_title} jest już w rezultatach')
                 continue
 
-            if self.look_in_db and is_in_db(self.db_path, band_name, song_title):
+            if self.look_in_db and is_in_db(band_name, song_title):
                 print(f'{band_name} - {song_title} jest już w bazie')
                 continue
 
@@ -117,3 +117,7 @@ def load_data(data_path):
         for record in json.load(f):
             vocal_time_database.append(record)
 
+
+def get_data_from_json(data_path):
+    with open(data_path, 'r', encoding="utf8") as f:
+        return json.load(f)

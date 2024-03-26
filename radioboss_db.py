@@ -1,4 +1,9 @@
+import os
+
 import sqlite3
+
+default_db_path = os.path.join(os.environ['APPDATA'], 'djsoft.net', 'tracks.db')
+DB_PATH = default_db_path if os.path.exists(default_db_path) else ''
 
 
 def _get_track_id(cursor, artist, title):
@@ -26,17 +31,20 @@ def _add_record(cursor, song_id, intro, outro):
                    f'WHERE track_id = "{song_id}"')
 
 
-def is_in_db(db_path: str, band_name: str, song_title: str) -> bool:
-    conn = sqlite3.connect(db_path)
+def is_in_db(band_name: str, song_title: str) -> bool:
+    conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
 
     song_id = _get_track_id(cursor, band_name, song_title)
+    has_intro_outro = _has_intro_outro(cursor, song_id)
 
-    return True if _has_intro_outro(cursor, song_id) else False
+    conn.close()
+
+    return has_intro_outro
 
 
-def add_songs_info(db_path, overwrite, vocal_time_database):
-    conn = sqlite3.connect(db_path)
+def add_songs_info(overwrite, vocal_time_database):
+    conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
 
     for audio in vocal_time_database:

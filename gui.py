@@ -2,7 +2,7 @@ import os
 import threading
 
 from PySide6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QPushButton, QRadioButton, QLabel, QLineEdit, QFileDialog, QWidget, QTabWidget, QSlider, QTableWidget, QTableWidgetItem, QCheckBox, QMessageBox
-from PySide6.QtCore import Qt, QStandardPaths, QPointF
+from PySide6.QtCore import Qt, QPointF
 from PySide6.QtGui import QFont, QPixmap, QPalette, QBrush
 
 import general
@@ -61,32 +61,82 @@ class MainWindow(QMainWindow):
 
         self.tab1_layout.addLayout(self.songs_path_layout)
 
-        # Downloads path
-        self.downloads_path_layout = QHBoxLayout()
+        # Options
 
-        self.downloads_path = QLineEdit()
-        self.downloads_path.setText(QStandardPaths.writableLocation(QStandardPaths.DownloadLocation))
-        self.downloads_path.setStyleSheet("background-color: rgba(255, 255, 255, 0.7);")
-        self.downloads_path.setPlaceholderText("Ścieżka outputu")
-        self.downloads_path_layout.addWidget(self.downloads_path)
+        self.check_downloads = QCheckBox('Sprawdzaj czy wokalu nie ma w pobranych')
+        self.check_downloads.setChecked(True)
+        self.tab1_layout.addWidget(self.check_downloads)
 
-        self.output_path_button = QPushButton("Wybierz folder")
-        self.output_path_button.setStyleSheet("background-color: lightblue;")
-        self.output_path_button.clicked.connect(self.select_output_path)
-        self.downloads_path_layout.addWidget(self.output_path_button)
+        self.check_vox_in_db_layout = QHBoxLayout()
 
-        self.tab1_layout.addLayout(self.downloads_path_layout)
+        self.check_vox_in_db = QCheckBox('Sprawdzaj wokal w bazie')
+        self.check_vox_in_db.setChecked(True)
+        self.check_vox_in_db_layout.addWidget(self.check_vox_in_db)
+
+        self.check_vocs_in_db_path = QLineEdit()
+        self.check_vocs_in_db_path.setPlaceholderText("Ścieżka do bazy danych")
+        default_db_path = os.path.join(os.environ['APPDATA'], 'djsoft.net', 'tracks.db')
+        self.check_vocs_in_db_path.setText(default_db_path) if os.path.exists(default_db_path) else ''
+        self.check_vocs_in_db_path.setStyleSheet("background-color: rgba(255, 255, 255, 0.7);")
+        self.check_vox_in_db_layout.addWidget(self.check_vocs_in_db_path)
+
+        self.db_path_button = QPushButton("Wybierz bazę")
+        self.db_path_button.setStyleSheet("background-color: lightblue;")
+        self.db_path_button.clicked.connect(self.select_db_file)
+        self.check_vox_in_db_layout.addWidget(self.db_path_button)
+
+        self.tab1_layout.addLayout(self.check_vox_in_db_layout)
+
+        self.check_vox_in_json_layout = QHBoxLayout()
+
+        self.check_vox_in_json = QCheckBox('Sprawdzaj wokal w jsonie')
+        self.check_vox_in_json.setChecked(True)
+        self.check_vox_in_json_layout.addWidget(self.check_vox_in_json)
+
+        self.check_vox_in_json_path = QLineEdit()
+        self.check_vox_in_json_path.setPlaceholderText("*.json")
+        self.check_vox_in_json_path.setStyleSheet("background-color: rgba(255, 255, 255, 0.7);")
+        self.check_vox_in_json_layout.addWidget(self.check_vox_in_json_path)
+
+        self.check_vox_in_json_button = QPushButton("Wybierz json")
+        self.check_vox_in_json_button.setStyleSheet("background-color: lightblue")
+        self.check_vox_in_json_button.clicked.connect(self.select_json_path)
+        self.check_vox_in_json_layout.addWidget(self.check_vox_in_json_button)
+
+        self.tab1_layout.addLayout(self.check_vox_in_json_layout)
+
+        self.check_vox_in_folder_layout = QHBoxLayout()
+
+        self.check_vox_in_folder = QCheckBox('Sprawdzaj wokal w folderze')
+        self.check_vox_in_folder.setChecked(False)
+        self.check_vox_in_folder_layout.addWidget(self.check_vox_in_folder)
+
+        self.check_vox_in_folder_path = QLineEdit()
+        self.check_vox_in_folder_path.setPlaceholderText("Ścieżka do folderu")
+        self.check_vox_in_folder_path.setStyleSheet("background-color: rgba(255, 255, 255, 0.7);")
+        self.check_vox_in_folder_layout.addWidget(self.check_vox_in_folder_path)
+
+        self.folder_path_button = QPushButton("Wybierz folder")
+        self.folder_path_button.setStyleSheet("background-color: lightblue;")
+        self.folder_path_button.clicked.connect(self.select_folder_path)
+        self.check_vox_in_folder_layout.addWidget(self.folder_path_button)
+
+        self.tab1_layout.addLayout(self.check_vox_in_folder_layout)
 
         # Browser pick
+        self.browsers_layout = QHBoxLayout()
+
         self.firefox_button = QRadioButton("Firefox")
         self.firefox_button.setChecked(True)
-        self.tab1_layout.addWidget(self.firefox_button)
+        self.browsers_layout.addWidget(self.firefox_button)
 
         self.chrome_button = QRadioButton("Chrome")
-        self.tab1_layout.addWidget(self.chrome_button)
+        self.browsers_layout.addWidget(self.chrome_button)
 
         self.edge_button = QRadioButton("Edge")
-        self.tab1_layout.addWidget(self.edge_button)
+        self.browsers_layout.addWidget(self.edge_button)
+
+        self.tab1_layout.addLayout(self.browsers_layout)
 
         # Start button
         self.start_scraping_vocals_button = QPushButton("Start")
@@ -108,7 +158,7 @@ class MainWindow(QMainWindow):
         self.db_path.setStyleSheet("background-color: rgba(255, 255, 255, 0.7);")
         self.db_path_layout.addWidget(self.db_path)
 
-        self.db_path_button = QPushButton("Wybierz folder")
+        self.db_path_button = QPushButton("Wybierz bazę")
         self.db_path_button.setStyleSheet("background-color: lightblue;")
         self.db_path_button.clicked.connect(self.select_db_file)
         self.db_path_layout.addWidget(self.db_path_button)
@@ -280,16 +330,51 @@ class MainWindow(QMainWindow):
         folder_path = QFileDialog.getExistingDirectory(self, "Wybierz folder z wokalami")
         self.vocals_path.setText(folder_path)
 
+    def select_folder_path(self):
+        folder_path = QFileDialog.getExistingDirectory(self, "Wybierz folder z wokalami")
+        self.check_vox_in_folder_path.setText(folder_path)
+
+    def select_json_path(self):
+        dialog = QFileDialog()
+        json_path, _ = dialog.getOpenFileName(filter="JSON files (*.json)")
+
+        if json_path:
+            self.check_vox_in_json_path.setText(json_path)
+
     def select_db_file(self):
         file_path, _ = QFileDialog.getOpenFileName(self, "Wybierz plik z bazą danych")
         if file_path:
+            radioboss_db.DB_PATH = file_path
             self.db_path.setText(file_path)
-
-    def select_output_path(self):
-        folder_path = QFileDialog.getExistingDirectory(self, "Wybierz folder")
-        self.downloads_path.setText(folder_path)
+            self.check_vocs_in_db_path.setText(file_path)
 
     def start_scraping_vocals(self):
+        if self.check_vox_in_db.isChecked() and not self.check_vocs_in_db_path.text():
+            info_message = QMessageBox(self)
+            info_message.setIcon(QMessageBox.Warning)
+            info_message.setWindowTitle('Uzupełnij, proszę, wymagane pole')
+            info_message.setText('Jeśli chcesz sprawdzać czy wokalu do danej piosenki nie ma już w RadioBossie, musisz najpierw wskazać bazę danych.\n\n'
+                                 'Prawdopodobnie nazywa się tracks.db i domyślnie powinna znajdować się w:\n '
+                                 'C:\\Users\\<user>\\AppData\\Roaming\\djsoft.net\\')
+            info_message.exec()
+            return
+
+        if self.check_vox_in_json.isChecked() and not self.check_vox_in_json_path.text():
+            info_message = QMessageBox(self)
+            info_message.setIcon(QMessageBox.Warning)
+            info_message.setWindowTitle('Uzupełnij, proszę, wymagane pole')
+            info_message.setText('Jeśli chcesz sprawdzać czy wokal do danej piosenki nie został już zapisany do pliku json, musisz najpierw wskazać plik json.')
+            info_message.exec()
+            return
+
+        if self.check_vox_in_json.isChecked() and not self.check_vox_in_json_path.text():
+            info_message = QMessageBox(self)
+            info_message.setIcon(QMessageBox.Warning)
+            info_message.setWindowTitle('Uzupełnij, proszę, wymagane pole')
+            info_message.setText('Jeśli chcesz sprawdzać czy wokal do danej piosenki nie został już zapisany w folderze, musisz najpierw wskazać folder.')
+            info_message.exec()
+            return
+
         if self.firefox_button.isChecked():
             browser = 'Firefox'
         elif self.chrome_button.isChecked():
@@ -299,7 +384,16 @@ class MainWindow(QMainWindow):
         else:
             browser = 'Firefox'
 
-        threading.Thread(target=lambda: vocals_scrapper.run_loop(self.songs_path.text(), self.songs_path.text(), browser)).start()
+        threading.Thread(target=lambda: vocals_scrapper.run_loop(
+            self.songs_path.text(),
+            browser,
+            self.check_downloads.isChecked(),
+            self.check_vox_in_db.isChecked(),
+            self.check_vox_in_json.isChecked(),
+            self.check_vox_in_folder.isChecked(),
+            json_path=self.check_vox_in_json_path.text(),
+            folder_path=self.check_vox_in_folder_path.text()
+        )).start()
 
     def read_vocals_time(self):
         if self.omit_vocals_from_db_checkbox.isChecked() and not self.db_path.text():
@@ -307,7 +401,7 @@ class MainWindow(QMainWindow):
             info_message.setIcon(QMessageBox.Warning)
             info_message.setWindowTitle('Uzupełnij, proszę, wymagane pole')
             info_message.setText('Jeśli chcesz sprawdzać czy dana piosenka jest już w bazie, musisz podać jej lokalizację.\n\n'
-                                 'Prawdopodobnie nazywa się tracks.db i znajduje się w:\n '
+                                 'Prawdopodobnie nazywa się tracks.db i domyślnie powinna znajdować się w:\n '
                                  'C:\\Users\\<user>\\AppData\\Roaming\\djsoft.net\\\n\n'
                                  'Miłego dnia.')
             info_message.exec()
@@ -370,14 +464,14 @@ class MainWindow(QMainWindow):
             button = dialog_box.exec()
 
             if button == QMessageBox.Yes:
-                radioboss_db.add_songs_info(self.db_path.text(), self.overwrite_checkbox.isChecked(), vocals_analysis.vocal_time_database)
+                radioboss_db.add_songs_info(self.overwrite_checkbox.isChecked(), vocals_analysis.vocal_time_database)
 
         else:
             info_message = QMessageBox(self)
             info_message.setIcon(QMessageBox.Warning)
             info_message.setWindowTitle('Uzupełnij, proszę, wymagane pole')
             info_message.setText('Jeśli chcesz uzupełnić bazę RadioBossa, musisz najpierw wskazać bazę danych.\n\n'
-                                 'Prawdopodobnie nazywa się tracks.db i znajduje się w:\n '
+                                 'Prawdopodobnie nazywa się tracks.db i domyślnie powinna znajdować się w:\n '
                                  'C:\\Users\\<user>\\AppData\\Roaming\\djsoft.net\\\n'
                                  'Pamiętaj też o wyłączeniu RadioBossa w trakcie aktuailzacji bazy danych.\n\n'
                                  'Miłego dnia.')
