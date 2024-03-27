@@ -224,17 +224,13 @@ class MainWindow(QMainWindow):
         self.tab2_layout.addLayout(self.slider_input_layout)
 
         # Saving options
-        self.omit_vocals_from_db_checkbox = QCheckBox('Nie przetwarzaj wokali dla piosenek, które są już w bazie RadioBossa')
+        self.omit_vocals_from_db_checkbox = QCheckBox('Nie analizuj wokali dla piosenek, które są już w bazie')
         self.omit_vocals_from_db_checkbox.setChecked(True)
         self.tab2_layout.addWidget(self.omit_vocals_from_db_checkbox)
 
-        self.omit_vocals_from_results_checkbox = QCheckBox('Nie przetwarzaj wokali dla piosenek, które są już wczytane')
+        self.omit_vocals_from_results_checkbox = QCheckBox('Nie analizuj wokali dla piosenek, które są już wczytane')
         self.omit_vocals_from_results_checkbox.setChecked(True)
         self.tab2_layout.addWidget(self.omit_vocals_from_results_checkbox)
-
-        self.overwrite_checkbox = QCheckBox('Nadpisz piosenkę w bazie')
-        self.overwrite_checkbox.setChecked(False)
-        self.tab2_layout.addWidget(self.overwrite_checkbox)
 
         # Json
         self.read_voc_info_buttons_layout = QHBoxLayout()
@@ -266,6 +262,10 @@ class MainWindow(QMainWindow):
 
         self.tab2_layout.addLayout(self.read_stop_save_clear_buttons_layout)
 
+        self.overwrite_checkbox = QCheckBox('Nadpisz piosenkę w bazie')
+        self.overwrite_checkbox.setChecked(False)
+        self.tab2_layout.addWidget(self.overwrite_checkbox)
+
 
         ###################### Tab 3 #######################
 
@@ -282,7 +282,7 @@ class MainWindow(QMainWindow):
         self.exit_button.clicked.connect(self.close)
         layout.addWidget(self.exit_button)
 
-        self.version_label = QLabel("v1.0")
+        self.version_label = QLabel("v1.0.1")
         self.version_label.setFont(QFont("Arial", 8))
         self.version_label.setAlignment(Qt.AlignRight)
         layout.addWidget(self.version_label)
