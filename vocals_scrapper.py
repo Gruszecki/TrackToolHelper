@@ -60,7 +60,7 @@ class WebWalker(QThread):
         self._driver.quit()
 
     def open_site(self):
-        self._driver.get('https://vocalremover.org')
+        self._driver.get('https://vocalremover.org/?patreon')
 
     def upload_file(self, audio_path):
         WebDriverWait(self._driver, 5).until(EC.element_to_be_clickable(BUTTON_BROWSE_SELECTOR)).click()
@@ -83,10 +83,9 @@ class WebWalker(QThread):
 
     def run(self):
         audio_files = general.get_audio_files(self.audio_path)
-        already_in_downloads = [[get_band_name(path), get_song_title(path)] for path in general.get_audio_files(str(Path.home() / 'Downloads'))]
-        json_db = vocals_analysis.get_data_from_json(self.json_path)
-        already_in_json = [[d['band'], d['title']] for d in json_db]
-        already_in_folder = [[get_band_name(path), get_song_title(path)] for path in general.get_audio_files(self.folder_path)]
+        already_in_downloads = [[get_band_name(path), get_song_title(path)] for path in general.get_audio_files(str(Path.home() / 'Downloads'))] if self.check_downloads else []
+        already_in_json = [[d['band'], d['title']] for d in vocals_analysis.get_data_from_json(self.json_path)] if self.check_json else []
+        already_in_folder = [[get_band_name(path), get_song_title(path)] for path in general.get_audio_files(self.folder_path)] if self.check_folder else []
 
         for audio_file in audio_files:
             if not self.is_running:

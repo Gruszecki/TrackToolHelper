@@ -70,17 +70,21 @@ def _is_in_results(band_name, song_title):
 
 
 def _calculate_vocal(audio_file, threshold):
+    print('Loading audio file')
     y, sr = librosa.load(audio_file)
     D = librosa.stft(y)
     magnitude, phase = librosa.magphase(D)
     S_filter = librosa.decompose.nn_filter(magnitude)
     y_recover = librosa.istft(S_filter * phase)
     loudness = librosa.feature.rms(y=y_recover)
+    print('Normalizing loudness')
     normalized_loudness = (loudness - np.min(loudness)) / (np.max(loudness) - np.min(loudness))
     normalized_loudness = normalized_loudness[0]
+    print('Extracting loud frames according to the threshold')
     loud_frames = np.where(normalized_loudness > threshold)[0]
 
     if len(loud_frames) > 0:
+        print('Loud frames present. Calculating the first and the last timestamp.')
         first_loud_frame = loud_frames[0]
         last_loud_frame = loud_frames[-1]
 

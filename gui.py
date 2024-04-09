@@ -282,7 +282,7 @@ class MainWindow(QMainWindow):
         self.exit_button.clicked.connect(self.close)
         layout.addWidget(self.exit_button)
 
-        self.version_label = QLabel("v1.0.1")
+        self.version_label = QLabel("v1.0.2")
         self.version_label.setFont(QFont("Arial", 8))
         self.version_label.setAlignment(Qt.AlignRight)
         layout.addWidget(self.version_label)
