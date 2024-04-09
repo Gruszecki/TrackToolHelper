@@ -5,6 +5,7 @@ Narzędzie do wspomagania dodawania intro i outro piosenek w programie RadioBoss
 ### Działanie programu
 Dodawanie intro i outro do RadioBossa podzielone jest na kilka etapów wylistowanych poniżej. 
 Każdy krok będzie wyjaśniony w dalszej części dokumentu.
+
 0. **Uzupełnienie metadanych piosenki: wykonawca i tytuł** - ważne
 1. Odseparowanie wokalu od piosenki.
 2. Analiza wokalu.
